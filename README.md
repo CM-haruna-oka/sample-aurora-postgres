@@ -1,5 +1,5 @@
-# Sample Serverless API
-AWSのAPI Gateway + Lambdaを用いた基本的なサーバーレスAPIです。
+# Sample Aurora Postgres
+AWSのAPI Gateway + VPC Lambda + RDS Aurora PostgreSQL互換を用いたサンプルです。
 
 エディタにVScode、Linterにpylint、スタイル規約にPEP8、コード整形にautopep8を使っています。
 
