@@ -14,12 +14,12 @@ logger.debug(psycopg2.__version__)
 # conn = psycopg2.connect(
 #     port=3306,
 #     host=os.environ['DB_HOST'],
-#     dbname="postgres",
-#     user="postgres",
+#     dbname=os.environ['DB_USER_NAME'],
+#     user=os.environ['DB_PASSWORD'],
 #     password="postgres")
 # cur = conn.cursor()
 # cur.execute(
-#     "CREATE TABLE promotional_items (id serial PRIMARY KEY, name varchar, category varchar);")
+#     "CREATE TABLE items (id serial PRIMARY KEY, name varchar, category varchar);")
 # cur.close()
 # conn.close()
 
@@ -29,16 +29,16 @@ def listPromotionalItems(limit):
     # TODO db connection
 
     data = [
-        {'promotional_item_id': '0001',
-         'promotional_item_name': 'サンプル品1', 'category': '販促物'},
-        {'promotional_item_id': '0002',
-         'promotional_item_name': 'サンプル品2', 'category': '販促物'},
-        {'promotional_item_id': '0003',
-         'promotional_item_name': 'サンプル品3', 'category': '販促物'},
-        {'promotional_item_id': '0004',
-         'promotional_item_name': 'サンプル品4', 'category': '販促物'},
-        {'promotional_item_id': '0005',
-         'promotional_item_name': 'サンプル品5', 'category': '販促物'}
+        {'item_id': '0001',
+         'item_name': 'サンプル品1', 'category': '販促物'},
+        {'item_id': '0002',
+         'item_name': 'サンプル品2', 'category': '販促物'},
+        {'item_id': '0003',
+         'item_name': 'サンプル品3', 'category': '販促物'},
+        {'item_id': '0004',
+         'item_name': 'サンプル品4', 'category': '販促物'},
+        {'item_id': '0005',
+         'item_name': 'サンプル品5', 'category': '販促物'}
     ]
     return data
 
