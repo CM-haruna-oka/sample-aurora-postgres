@@ -29,6 +29,7 @@ provider:
     ENV: ${self:custom.environments.ENV}
     DB_PORT: 3306
     DB_USER_NAME: ${self:custom.secret.USER_NAME}
+    DB_PASSWORD: ${self:custom.secret.PASSWORD}
     DB_HOST: ${self:custom.secret.DB_HOST}
 
 custom:
