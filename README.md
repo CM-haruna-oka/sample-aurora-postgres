@@ -1,7 +1,5 @@
-# Sample Aurora Postgres
-AWSのAPI Gateway + VPC Lambda + RDS Aurora PostgreSQL互換を用いたサンプルです。
-
-エディタにVScode、Linterにpylint、スタイル規約にPEP8、コード整形にautopep8を使っています。
+# Aurora Postgres Sample
+AWSのAPI Gateway + VPC Lambda + RDS Aurora PostgreSQL互換をServerless Frameworkでデプロイするサンプルです。
 
 ## 使用ツール
 - バージョン管理: pyenv
