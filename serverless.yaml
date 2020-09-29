@@ -1,5 +1,5 @@
 service:
-  name: sample-serverless-api
+  name: sample-aurora-postgres
 
 plugins:
   - serverless-python-requirements
@@ -11,15 +11,16 @@ provider:
   stage: ${opt:stage, self:custom.defaultStage}
   profile: ${self:custom.profiles.${opt:stage, self:custom.defaultStage}}
   runtime: python3.8
-  stackName: sample-serverless-api
-  apiName: sample-serverless-api
+  stackName: sample-aurora-postgres
+  apiName: sample-aurora-postgres
+  logRetentionInDays: 7
+  versionFunctions: false
   iamRoleStatements:
     - Effect: Allow
       Action:
         - secretsmanager:GetSecretValue
         - rds-data:*
         - lambda:GetLayerVersion
-        # ENI作成のために必要な権限
         - ec2:CreateNetworkInterface
         - ec2:DescribeNetworkInterfaces
         - ec2:DeleteNetworkInterface
@@ -30,7 +31,7 @@ provider:
     DB_PORT: 3306
     DB_USER_NAME: ${self:custom.secret.USER_NAME}
     DB_PASSWORD: ${self:custom.secret.PASSWORD}
-    DB_HOST: ${self:custom.secret.DB_HOST}
+    DB_HOST: !GetAtt RDSProxy.Endpoint
 
 custom:
   defaultStage: itg
@@ -124,11 +125,6 @@ resources:
           - Key: "Name"
             Value: "AuroraSecurityGroup"
       DependsOn: VPC
-    AuroraSecret:
-      Type: AWS::SecretsManager::Secret
-      Properties:
-        Name: Sample/aurora
-        SecretString: '{"username":"${self:custom.secret.USER_NAME}", "password":"${self:custom.secret.PASSWORD}"}'
 
     ## RDS Resource
     DBSubnetGroup:
@@ -160,10 +156,33 @@ resources:
         Family: aurora-postgresql11
         Parameters:
           client_encoding: UTF8
+    DBInstance1:
+      Type: AWS::RDS::DBInstance
+      Properties:
+        DBClusterIdentifier: !Ref DBCluster
+        DBSubnetGroupName: !Ref DBSubnetGroup
+        Engine: aurora-postgresql
+        EngineVersion: "11.6"
+        DBInstanceClass: db.t3.medium
+      DependsOn: DBCluster
 
+    ## Secret & Proxy
+    AuroraSecret:
+      Type: AWS::SecretsManager::Secret
+      Properties:
+        Name: Sample/aurora
+        SecretString: '{"username":"${self:custom.secret.USER_NAME}", "password":"${self:custom.secret.PASSWORD}"}'
+    SecretTargetAttachment:
+      Type: AWS::SecretsManager::SecretTargetAttachment
+      Properties:
+        SecretId: !Ref AuroraSecret
+        TargetId: !Ref DBCluster
+        TargetType: "AWS::RDS::DBCluster"
+      DependsOn: DBCluster
     ProxyRole:
       Type: AWS::IAM::Role
       Properties:
+        RoleName: sample-proxy-role
         AssumeRolePolicyDocument:
           Version: "2012-10-17"
           Statement:
@@ -173,6 +192,7 @@ resources:
                   - "rds.amazonaws.com"
               Action:
                 - "sts:AssumeRole"
+        Path: /
         Policies:
           - PolicyName: RdsProxyPolicy
             PolicyDocument:
@@ -189,12 +209,11 @@ resources:
                 - Effect: Allow
                   Action:
                     - "kms:Decrypt"
-                  Resource: "arn:aws:kms:${self:provider.region}:#{AWS::AccountId}:key/*"
+                  Resource: "arn:aws:kms:#{AWS::Region}:#{AWS::AccountId}:key/*"
                   Condition:
                     StringEquals:
-                      kms:ViaService: "secretsmanager.${self:provider.region}.amazonaws.com"
+                      kms:ViaService: "secretsmanager.#{AWS::Region}.amazonaws.com"
       DependsOn: AuroraSecret
-
     RDSProxy:
       Type: AWS::RDS::DBProxy
       Properties:
@@ -209,13 +228,11 @@ resources:
         EngineFamily: POSTGRESQL
         RoleArn: !GetAtt ProxyRole.Arn
       DependsOn: AuroraSecret
-
-    DBInstance1:
-      Type: AWS::RDS::DBInstance
+    DBProxyTargetGroup:
+      Type: AWS::RDS::DBProxyTargetGroup
       Properties:
-        DBClusterIdentifier: !Ref DBCluster
-        DBSubnetGroupName: !Ref DBSubnetGroup
-        Engine: aurora-postgresql
-        EngineVersion: "11.6"
-        DBInstanceClass: db.t3.large
-      DependsOn: DBCluster
+        TargetGroupName: default
+        DBProxyName: !Ref RDSProxy
+        DBClusterIdentifiers:
+          - !Ref DBCluster
+      DependsOn: RDSProxy

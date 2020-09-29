@@ -4,24 +4,27 @@ import os
 import psycopg2
 
 
-log_level = 'DEBUG' if os.environ['ENV'] == 'dev' else 'INFO'
+log_level = 'DEBUG' if os.environ['ENV'] == 'itg' else 'INFO'
 
 logger = logging.getLogger()
 logger.setLevel(log_level)
 
 logger.debug(psycopg2.__version__)
+logger.debug(psycopg2.apilevel)
 
-# conn = psycopg2.connect(
-#     port=3306,
-#     host=os.environ['DB_HOST'],
-#     dbname=os.environ['DB_USER_NAME'],
-#     user=os.environ['DB_PASSWORD'],
-#     password="postgres")
-# cur = conn.cursor()
-# cur.execute(
-#     "CREATE TABLE items (id serial PRIMARY KEY, name varchar, category varchar);")
-# cur.close()
-# conn.close()
+conn = psycopg2.connect(
+    port=os.environ['DB_PORT'],
+    host=os.environ['DB_HOST'],
+    dbname="SampleDB",
+    user=os.environ['DB_USER_NAME'],
+    password=os.environ['DB_PASSWORD'])
+cur = conn.cursor()
+cur.execute("select * from pg_class;")
+result = cur.fetchall()
+logging.debug(cur)
+logging.debug(result)
+cur.close()
+conn.close()
 
 
 def listPromotionalItems(limit):
